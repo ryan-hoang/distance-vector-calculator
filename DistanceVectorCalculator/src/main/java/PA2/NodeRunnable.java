@@ -3,8 +3,10 @@ package PA2;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -73,19 +75,58 @@ public final class NodeRunnable implements Runnable {
     }
 
     //Updates this node's weight vector using a weight vector received from one of its neighbors.
-    public void updateWeightVector(ArrayList<Integer> weights)
+    public void updateWeightVector(ArrayList<Integer> weights) //TODO - write this
     {
 
     }
 
     //opens a client TCP socket to the neighbor
-    public void notifyNeighbor()
+    public void notifyNeighbor(int id)
     {
+        int port = network.get(id);
+        try (Socket socket = new Socket(InetAddress.getLocalHost(),port))
+        {
+
+            ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+
+            ArrayList<Object> payload = generatePayload(); //TODO - Actually have to write the method to package the stuff to be sent.
+
+            output.writeObject(payload);
+
+            @SuppressWarnings("unchecked")
+            ArrayList<Object> response = (ArrayList<Object>) input.readObject();
+
+        }
+        catch (UnknownHostException ex)
+        {
+            System.err.println(Thread.currentThread().getName() + ": UnknownHostException, failed to connect to host.");
+        }
+        catch (IOException ex)
+        {
+            System.err.println(Thread.currentThread().getName() + ": IOException.");
+        }
+        catch(ClassNotFoundException e)
+        {
+            System.err.println(Thread.currentThread().getName() + ": Failed to deserialize payload.");
+        }
+
+        //TODO - add logic for what you get back from the other node. (Did it update or not?)
+
 
     }
 
+
+    public static ArrayList<Object> generatePayload() //TODO - Write this.
+    {
+
+        return new ArrayList<Object>();
+    }
+
     //Closes this nodes ServerSocket when its time to shutdown.
-    public void cleanup() {
+    public void cleanup()
+    {
          try
         {
             this.myServerSocket.close();

@@ -21,6 +21,8 @@ public final class DistanceVectorCalculator
         ExecutorService exec = (ExecutorService) p.second;
 
 
+        /*
+
         ArrayList<Object> arr = new ArrayList<>();
         arr.add("test");
 
@@ -64,13 +66,7 @@ public final class DistanceVectorCalculator
         {
 
         }
-
-
-
-
-
-
-
+        */
     }
 
 
