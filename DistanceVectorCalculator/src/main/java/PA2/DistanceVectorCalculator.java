@@ -102,7 +102,7 @@ public final class DistanceVectorCalculator
 
             network.put(i, s.getLocalPort());
 
-            NodeRunnable temp = new NodeRunnable(row, s, neighbors);
+            NodeRunnable temp = new NodeRunnable(row, s, neighbors, i);
 
             nodes.add(temp);
         }

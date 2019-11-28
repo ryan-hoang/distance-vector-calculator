@@ -13,11 +13,12 @@ public final class NodeRunnable implements Runnable {
     private ArrayList<Integer> weightVector;
     private ServerSocket myServerSocket;
     private ArrayList<Integer> neighbors;
+    private int id;
 
     @Override
     public void run()
     {
-        System.out.println(Thread.currentThread().getName() + "is online. | " + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: " + myServerSocket.getLocalPort() + " | " + network.toString());
+        System.out.println(Thread.currentThread().getName() + "is online. | " + "node: " + id + " | " + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: " + myServerSocket.getLocalPort() + " | " + network.toString());
 
         while(true)
         {
@@ -33,7 +34,6 @@ public final class NodeRunnable implements Runnable {
 
                 @SuppressWarnings("unchecked")
                 ArrayList<Object> data = (ArrayList) input.readObject();
-
 
 
                 for(Object o : data)
@@ -59,11 +59,12 @@ public final class NodeRunnable implements Runnable {
 
     }
 
-    public NodeRunnable(ArrayList<Integer> weights, ServerSocket socket, ArrayList<Integer> neigh)
+    public NodeRunnable(ArrayList<Integer> weights, ServerSocket socket, ArrayList<Integer> neigh, int id)
     {
         this.weightVector = weights;
         this.myServerSocket = socket;
         this.neighbors = neigh;
+        this.id = id;
     }
 
     public void setNetwork(HashMap<Integer, Integer> net)
