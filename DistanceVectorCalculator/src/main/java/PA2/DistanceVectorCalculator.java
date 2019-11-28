@@ -1,9 +1,10 @@
 package PA2;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +20,56 @@ public final class DistanceVectorCalculator
         ArrayList<ServerSocket> sockets = (ArrayList<ServerSocket>) p.first;
         ExecutorService exec = (ExecutorService) p.second;
 
-        exec.shutdown();
+
+        ArrayList<Object> arr = new ArrayList<>();
+        arr.add("test");
+
+        int port = sockets.get(0).getLocalPort();
+
+        try (Socket socket = new Socket(InetAddress.getLocalHost(),port))
+        {
+
+            ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+
+            output.writeObject(arr);
+
+            @SuppressWarnings("unchecked")
+            ArrayList<Object> data = (ArrayList) input.readObject();
+
+
+
+            for(Object o : data)
+            {
+                String s = (String) o;
+                System.out.println(Thread.currentThread().getName() + ": " + s);
+            }
+
+
+
+        }
+        catch (UnknownHostException ex)
+        {
+
+            System.out.println("Server not found: " + ex.getMessage());
+
+        }
+        catch (IOException ex)
+        {
+
+            System.out.println("I/O error: " + ex.getMessage());
+        }
+        catch (ClassNotFoundException e)
+        {
+
+        }
+
+
+
+
+
+
 
     }
 
