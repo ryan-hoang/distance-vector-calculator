@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public final class NodeRunnable implements Runnable {
-    private HashMap<Integer, Integer> network;
+    private HashMap<Integer, Integer> network; // maps node ID to port number.
     private ArrayList<Integer> weightVector;
     private ServerSocket myServerSocket;
     private ArrayList<Integer> neighbors;
@@ -70,7 +70,7 @@ public final class NodeRunnable implements Runnable {
                 }
                 else
                 {
-                    boolean update = updateWeightVector(received.getWeightVector());
+                    boolean update = updateWeightVector(received.getWeightVector(), received.senderID());
                     if (update)
                     {
                         output.writeObject(new Packet(null, false, true, true, false, id));
@@ -99,7 +99,7 @@ public final class NodeRunnable implements Runnable {
 
     public NodeRunnable(ArrayList<Integer> weights, ServerSocket socket, ArrayList<Integer> neigh, int id)
     {
-        this.weightVector = weights;
+        this.weightVector = new ArrayList<Integer> (weights);
         this.myServerSocket = socket;
         this.neighbors = neigh;
         this.id = id;
@@ -111,11 +111,30 @@ public final class NodeRunnable implements Runnable {
     }
 
     //Updates this node's weight vector using a weight vector received from one of its neighbors.
-    public boolean updateWeightVector(ArrayList<Integer> weights)
+    public boolean updateWeightVector(ArrayList<Integer> otherWeightVector, int neighborID)
     {
+        boolean updated = false;
+        for(int i = 0; i < weightVector.size(); i++)
+        {
+            if(i == id || i == neighborID)
+            {
+                continue;
+            }
+            else
+            {
+                int currentDistance = weightVector.get(i);
+                int proposedDistance = otherWeightVector.get(i) + weightVector.get(neighborID);
 
+                if(proposedDistance < currentDistance || (currentDistance == 0 && otherWeightVector.get(i) != 0))
+                {
+                    weightVector.set(i,proposedDistance);
+                    updated = true;
+                }
+            }
 
-        return false;
+        }
+
+        return updated;
     }
 
     //opens a client TCP socket to the neighbor

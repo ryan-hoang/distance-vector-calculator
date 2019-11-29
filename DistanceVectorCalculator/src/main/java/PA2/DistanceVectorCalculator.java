@@ -69,6 +69,13 @@ public final class DistanceVectorCalculator
         */
     }
 
+    public static void startDV(ArrayList<ServerSocket> nodes)
+    {
+
+
+
+
+    }
 
     public static Pair network_init()
     {
