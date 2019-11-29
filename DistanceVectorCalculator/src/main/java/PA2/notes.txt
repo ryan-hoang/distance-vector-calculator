@@ -1,0 +1,4 @@
+packet from main thread telling me to shutdown OR that its my turn
+
+packet from neighbor with a weight vector
+

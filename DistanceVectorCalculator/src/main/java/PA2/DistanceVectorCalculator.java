@@ -113,7 +113,7 @@ public final class DistanceVectorCalculator
     }
 
     //Helper method to generate the server sockets for each node in our network.
-    //Generates the specified number of server sockets and returns an arraylist of the serversockets.
+    //Generates the specified number of server sockets and returns an ArrayList of the ServerSockets.
     public static ArrayList<ServerSocket> createNodeServerSockets(int numNodes)
     {
         ArrayList<ServerSocket> serverSockets = new ArrayList<>();

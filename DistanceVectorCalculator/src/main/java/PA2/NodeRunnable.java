@@ -35,16 +35,52 @@ public final class NodeRunnable implements Runnable {
                 System.out.println(Thread.currentThread().getName() + ": Accepted Incoming connection originating from port: " + client.getLocalPort());
 
                 @SuppressWarnings("unchecked")
-                ArrayList<Object> data = (ArrayList) input.readObject();
+                Packet received = (Packet) input.readObject();
 
 
-                for(Object o : data)
+                if(received.flagControlPacket() && received.flagActivate() && received.senderID() == -1) // received signal from the main thread to start sending info to neighbors. id -1 means its from the main thread.
                 {
-                    String s = (String) o;
-                    System.out.println(Thread.currentThread().getName() + ": " + s);
-                }
+                    boolean updateHappenedElsewhere = false;
 
-                output.writeObject(data);
+                    for(int i = 0; i < neighbors.size(); i++) // Start notifying my neighbors
+                    {
+                        Packet response = notifyNeighbor(neighbors.get(i));
+                        if(response.flagControlPacket() && response.flagUpdated())
+                        {
+                            updateHappenedElsewhere = true;
+                        }
+                    }
+
+                    if(updateHappenedElsewhere == false)
+                    {
+                        output.writeObject(new Packet(weightVector, true, false, true, false, id)); //send back my weight vector and signal time to stop.
+                    }
+                    else
+                    {
+                        output.writeObject(new Packet(weightVector, true, true, true, false, id)); //send back my weight vector and signal time to stop.
+                    }
+                    client.close();
+                }
+                else if(received.flagControlPacket() && received.flagShutdown() && received.senderID() == -1) // shutdown time
+                {
+                    output.writeObject(new Packet(weightVector, true, false, true, false, id)); //send back my weight vector and shutdown
+                    client.close();
+                    cleanup();
+                    return;
+                }
+                else
+                {
+                    boolean update = updateWeightVector(received.getWeightVector());
+                    if (update)
+                    {
+                        output.writeObject(new Packet(null, false, true, true, false, id));
+                    }
+                    else
+                    {
+                        output.writeObject(new Packet(null, false, false, true, false, id));
+                    }
+                    client.close();
+                }
 
 
             }
@@ -75,15 +111,18 @@ public final class NodeRunnable implements Runnable {
     }
 
     //Updates this node's weight vector using a weight vector received from one of its neighbors.
-    public void updateWeightVector(ArrayList<Integer> weights) //TODO - write this
+    public boolean updateWeightVector(ArrayList<Integer> weights)
     {
 
+
+        return false;
     }
 
     //opens a client TCP socket to the neighbor
-    public void notifyNeighbor(int id)
+    public Packet notifyNeighbor(int id)
     {
         int port = network.get(id);
+        Packet response = null;
         try (Socket socket = new Socket(InetAddress.getLocalHost(),port))
         {
 
@@ -91,12 +130,11 @@ public final class NodeRunnable implements Runnable {
 
             ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 
-            ArrayList<Object> payload = generatePayload(); //TODO - Actually have to write the method to package the stuff to be sent.
+            Packet payload = new Packet(weightVector, false, false, false, false, id);
 
             output.writeObject(payload);
 
-            @SuppressWarnings("unchecked")
-            ArrayList<Object> response = (ArrayList<Object>) input.readObject();
+            response = (Packet) input.readObject();
 
         }
         catch (UnknownHostException ex)
@@ -112,16 +150,7 @@ public final class NodeRunnable implements Runnable {
             System.err.println(Thread.currentThread().getName() + ": Failed to deserialize payload.");
         }
 
-        //TODO - add logic for what you get back from the other node. (Did it update or not?)
-
-
-    }
-
-
-    public static ArrayList<Object> generatePayload() //TODO - Write this.
-    {
-
-        return new ArrayList<Object>();
+        return response;
     }
 
     //Closes this nodes ServerSocket when its time to shutdown.
