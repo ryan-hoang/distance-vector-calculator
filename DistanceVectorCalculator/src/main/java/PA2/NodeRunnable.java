@@ -3,7 +3,6 @@ package PA2;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -65,7 +64,7 @@ public final class NodeRunnable implements Runnable {
                         output.writeObject(new Packet(new ArrayList<Integer>(), false, false, true, false, id)); //send back my weight vector and signal time to stop.
                     }
                     else
-                    {//TODO send back map of new vectors
+                    {
                         output.writeObject(new Packet(ans, false, true, true, false, id)); //send back my weight vector and signal update occurred
                     }
                     client.close();
@@ -120,7 +119,8 @@ public final class NodeRunnable implements Runnable {
     //Updates this node's weight vector using a weight vector received from one of its neighbors.
     public boolean updateWeightVector(ArrayList<Integer> otherWeightVector, int neighborID)
     {
-        System.out.println("Node " + this.id + " comparing DV with DV received from node " + neighborID + " " + this.weightVector + " vs. " + otherWeightVector + weightVector.get(neighborID));
+        System.out.println("Node " + this.id + " comparing DV with DV received from node " + neighborID
+                + " " + this.weightVector + " vs. " + otherWeightVector + " + " + weightVector.get(neighborID));
         boolean updated = false;
         for(int i = 0; i < weightVector.size(); i++)
         {
