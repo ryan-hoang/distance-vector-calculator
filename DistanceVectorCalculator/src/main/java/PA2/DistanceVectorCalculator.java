@@ -15,69 +15,102 @@ public final class DistanceVectorCalculator
 
     public static void main(String[] args)
     {
-        Pair p = network_init();
+        Triple t = network_init();
         @SuppressWarnings("unchecked")
-        ArrayList<ServerSocket> sockets = (ArrayList<ServerSocket>) p.first;
-        ExecutorService exec = (ExecutorService) p.second;
-
-
-        /*
-
-        ArrayList<Object> arr = new ArrayList<>();
-        arr.add("test");
-
-        int port = sockets.get(0).getLocalPort();
-
-        try (Socket socket = new Socket(InetAddress.getLocalHost(),port))
-        {
-
-            ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-
-            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-
-            output.writeObject(arr);
-
-            @SuppressWarnings("unchecked")
-            ArrayList<Object> data = (ArrayList) input.readObject();
-
-
-
-            for(Object o : data)
-            {
-                String s = (String) o;
-                System.out.println(Thread.currentThread().getName() + ": " + s);
-            }
-
-
-
-        }
-        catch (UnknownHostException ex)
-        {
-
-            System.out.println("Server not found: " + ex.getMessage());
-
-        }
-        catch (IOException ex)
-        {
-
-            System.out.println("I/O error: " + ex.getMessage());
-        }
-        catch (ClassNotFoundException e)
-        {
-
-        }
-        */
+        ArrayList<ServerSocket> sockets = (ArrayList<ServerSocket>) t.first;
+        ExecutorService exec = (ExecutorService) t.second;
+        @SuppressWarnings("unchecked")
+        ArrayList<ArrayList<Integer>> matrix = (ArrayList<ArrayList<Integer>>) t.third;
+        startDV(sockets, matrix);
     }
 
-    public static void startDV(ArrayList<ServerSocket> nodes)
+    public static void startDV(ArrayList<ServerSocket> nodes, ArrayList<ArrayList<Integer>> mat)
     {
+        boolean updated;
+        int counter = 0;
+
+        Matrix lastMatrix = new Matrix();
+        Matrix currentMatrix = new Matrix(mat);
+
+        do {
+            updated = false;
+
+            System.out.println("Current DV matrix: ");
+            System.out.println(currentMatrix.toString());
+            System.out.println("Last DV matrix: ");
+            System.out.println(lastMatrix.toString());
+
+            lastMatrix = new Matrix(currentMatrix);
+
+            for (int i = 0; i < nodes.size(); i++)
+            {
+                System.out.println("Round " + counter + ": Node " + i);
+                ServerSocket s = nodes.get(i);
+
+                try (Socket socket = new Socket(InetAddress.getLocalHost(),s.getLocalPort()))
+                {
+
+                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+                    ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+
+                    Packet payload = new Packet(new ArrayList<Integer>(), false, false, true, true, -1);
+
+                    output.writeObject(payload);
+
+                    Packet response = (Packet) input.readObject();
+
+                    if(response.flagControlPacket() && response.flagUpdated())
+                    {
+                        updated = true;
+                        for(int key: response.getAnswers().keySet())
+                        {
+                            currentMatrix.setRow(key, response.getAnswers().get(key));
+                        }
+                    }
 
 
+
+                }
+                catch (UnknownHostException ex)
+                {
+                    System.err.println(Thread.currentThread().getName() + ": UnknownHostException, failed to connect to host.");
+                }
+                catch (IOException ex)
+                {
+                    System.err.println(Thread.currentThread().getName() + ": IOException.");
+                }
+                catch(ClassNotFoundException e)
+                {
+                    System.err.println(Thread.currentThread().getName() + ": Failed to deserialize payload.");
+                }
+            }
+            counter++;
+            boolean sameOrDifferent = currentMatrix.equals(lastMatrix);
+            String ans = sameOrDifferent ? "Same" : "Updated";
+            System.out.println("Updated from last DV matrix or the same? " + ans);
+
+            if(sameOrDifferent)
+            {
+                updated = false;
+                printDV(currentMatrix);
+                System.out.println("Number of rounds till convergence = " + (counter-1));
+                break;
+            }
+        } while(updated);
 
 
     }
 
-    public static Pair network_init()
+    public static void printDV(Matrix m)
+    {
+        for(int i = 0; i < m.getRowSize(); i++)
+        {
+            System.out.println("Node " + i + " DV = " + m.getRow(i));
+        }
+    }
+
+    public static Triple network_init()
     {
         ArrayList<ArrayList<Integer>> matrix = readAdjacencyMatrix();
 
@@ -116,7 +149,7 @@ public final class DistanceVectorCalculator
             exec.submit(n);
         }
 
-        return new Pair(sockets, exec);
+        return new Triple(sockets, exec, matrix);
     }
 
     //Helper method to generate the server sockets for each node in our network.

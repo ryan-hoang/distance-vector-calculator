@@ -1,13 +1,15 @@
 package PA2;
 
-public final class Pair
+public final class Triple
 {
     public Object first;
     public Object second;
+    public Object third;
 
-    public Pair(Object a, Object b)
+    public Triple(Object a, Object b, Object c)
     {
         this.first = a;
         this.second = b;
+        this.third = c;
     }
 }

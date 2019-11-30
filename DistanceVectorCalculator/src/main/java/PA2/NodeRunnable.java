@@ -3,6 +3,7 @@ package PA2;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -20,7 +21,7 @@ public final class NodeRunnable implements Runnable {
     @Override
     public void run()
     {
-        System.out.println(Thread.currentThread().getName() + "is online. | " + "node: " + id + " | " + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: " + myServerSocket.getLocalPort() + " | " + network.toString());
+        //System.out.println(Thread.currentThread().getName() + "is online. | " + "node: " + id + " | " + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: " + myServerSocket.getLocalPort() + " | " + network.toString());
 
         while(true)
         {
@@ -32,7 +33,7 @@ public final class NodeRunnable implements Runnable {
 
                 ObjectInputStream input = new ObjectInputStream(client.getInputStream());
 
-                System.out.println(Thread.currentThread().getName() + ": Accepted Incoming connection originating from port: " + client.getLocalPort());
+                //System.out.println(Thread.currentThread().getName() + ": Accepted Incoming connection originating from port: " + client.getLocalPort());
 
                 @SuppressWarnings("unchecked")
                 Packet received = (Packet) input.readObject();
@@ -41,6 +42,7 @@ public final class NodeRunnable implements Runnable {
                 if(received.flagControlPacket() && received.flagActivate() && received.senderID() == -1) // received signal from the main thread to start sending info to neighbors. id -1 means its from the main thread.
                 {
                     boolean updateHappenedElsewhere = false;
+                    HashMap<Integer, ArrayList<Integer>> ans = new HashMap<>();
 
                     for(int i = 0; i < neighbors.size(); i++) // Start notifying my neighbors
                     {
@@ -48,36 +50,40 @@ public final class NodeRunnable implements Runnable {
                         if(response.flagControlPacket() && response.flagUpdated())
                         {
                             updateHappenedElsewhere = true;
+                            ans.put(response.senderID(),response.getWeightVector());
                         }
                     }
 
                     if(updateHappenedElsewhere == false)
                     {
-                        output.writeObject(new Packet(weightVector, true, false, true, false, id)); //send back my weight vector and signal time to stop.
+                        output.writeObject(new Packet(new ArrayList<Integer>(), false, false, true, false, id)); //send back my weight vector and signal time to stop.
                     }
                     else
-                    {
-                        output.writeObject(new Packet(weightVector, true, true, true, false, id)); //send back my weight vector and signal time to stop.
+                    {//TODO send back map of new vectors
+                        output.writeObject(new Packet(ans, false, true, true, false, id)); //send back my weight vector and signal update occurred
                     }
                     client.close();
                 }
                 else if(received.flagControlPacket() && received.flagShutdown() && received.senderID() == -1) // shutdown time
                 {
-                    output.writeObject(new Packet(weightVector, true, false, true, false, id)); //send back my weight vector and shutdown
+                    output.writeObject(new Packet(weightVector, false, false, false, false, id)); //send back my weight vector and shutdown
                     client.close();
                     cleanup();
                     return;
                 }
                 else
                 {
+                    System.out.println("Node " + this.id + " received DV from node " + received.senderID());
                     boolean update = updateWeightVector(received.getWeightVector(), received.senderID());
                     if (update)
                     {
-                        output.writeObject(new Packet(null, false, true, true, false, id));
+                        output.writeObject(new Packet(weightVector, false, true, true, false, id));
+                        System.out.println("New DV matrix " + weightVector + " at node " + this.id);
                     }
                     else
                     {
-                        output.writeObject(new Packet(null, false, false, true, false, id));
+                        output.writeObject(new Packet(new ArrayList<Integer>(), false, false, true, false, id));
+                        System.out.println("No change in DV at node " + this.id);
                     }
                     client.close();
                 }
@@ -113,24 +119,31 @@ public final class NodeRunnable implements Runnable {
     //Updates this node's weight vector using a weight vector received from one of its neighbors.
     public boolean updateWeightVector(ArrayList<Integer> otherWeightVector, int neighborID)
     {
+        System.out.println("Node " + this.id + " comparing DV with DV received from node " + neighborID + " " + this.weightVector + " vs. " + otherWeightVector + weightVector.get(neighborID));
         boolean updated = false;
         for(int i = 0; i < weightVector.size(); i++)
         {
-            if(i == id || i == neighborID)
+            int currentDistance = weightVector.get(i);
+            int proposedDistance = otherWeightVector.get(i) + weightVector.get(neighborID);
+
+            if(i == id || this.neighbors.contains(i))
             {
                 continue;
             }
-            else
-            {
-                int currentDistance = weightVector.get(i);
-                int proposedDistance = otherWeightVector.get(i) + weightVector.get(neighborID);
 
-                if(proposedDistance < currentDistance || (currentDistance == 0 && otherWeightVector.get(i) != 0))
-                {
-                    weightVector.set(i,proposedDistance);
-                    updated = true;
-                }
+            if(currentDistance == 0 && otherWeightVector.get(i) != 0)
+            {
+                weightVector.set(i, proposedDistance);
+                updated = true;
+                continue;
             }
+
+            if(proposedDistance < currentDistance && otherWeightVector.get(i) != 0)
+            {
+                weightVector.set(i,proposedDistance);
+                updated = true;
+            }
+
 
         }
 
@@ -138,9 +151,9 @@ public final class NodeRunnable implements Runnable {
     }
 
     //opens a client TCP socket to the neighbor
-    public Packet notifyNeighbor(int id)
+    public Packet notifyNeighbor(int ident)
     {
-        int port = network.get(id);
+        int port = network.get(ident);
         Packet response = null;
         try (Socket socket = new Socket(InetAddress.getLocalHost(),port))
         {
@@ -149,8 +162,8 @@ public final class NodeRunnable implements Runnable {
 
             ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 
-            Packet payload = new Packet(weightVector, false, false, false, false, id);
-
+            Packet payload = new Packet(weightVector, false, false, false, false, this.id);
+            System.out.println("Node " + this.id + " Sending DV: " + weightVector + " to node " + ident);
             output.writeObject(payload);
 
             response = (Packet) input.readObject();
