@@ -1,5 +1,12 @@
 package PA2;
 
+/*
+ * Fall 2019
+ * Ryan Hoang
+ * Programming Assignment 2
+ * CS555
+ */
+
 import java.util.ArrayList;
 
 public final class Matrix

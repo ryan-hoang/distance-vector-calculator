@@ -1,5 +1,13 @@
 package PA2;
 
+/*
+* Fall 2019
+* Ryan Hoang
+* Programming Assignment 2
+* CS555
+*/
+
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -12,18 +20,19 @@ import java.util.HashMap;
 
 public final class NodeRunnable implements Runnable {
     private HashMap<Integer, Integer> network; // maps node ID to port number.
-    private ArrayList<Integer> weightVector;
-    private ServerSocket myServerSocket;
-    private ArrayList<Integer> neighbors;
-    private int id;
+    private ArrayList<Integer> weightVector;  // this is my DV for the other nodes.
+    private ServerSocket myServerSocket;     // The socket that other nodes will contact me at.
+    private ArrayList<Integer> neighbors;   // List of nodes that are my direct neighbors.
+    private int id;                        // Unique node ID, nodes are always stored/indexed using their ID.
 
     @Override
     public void run()
     {
+       /*
         System.out.println(Thread.currentThread().getName() + " is online. | " + "node: " + id + " | "
                 + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: "
                 + myServerSocket.getLocalPort() + " | " + network.toString());
-
+        */
         while(true)
         {
             try

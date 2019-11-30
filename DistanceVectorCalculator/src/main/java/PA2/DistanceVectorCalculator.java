@@ -1,5 +1,12 @@
 package PA2;
 
+/*
+ * Fall 2019
+ * Ryan Hoang
+ * Programming Assignment 2
+ * CS555
+ */
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -25,6 +32,7 @@ public final class DistanceVectorCalculator
         shutdown(sockets, exec);
     }
 
+    //begin the calculation.
     public static void startDV(ArrayList<ServerSocket> nodes, ArrayList<ArrayList<Integer>> mat)
     {
         boolean updated;
@@ -70,8 +78,6 @@ public final class DistanceVectorCalculator
                         }
                     }
 
-
-
                 }
                 catch (UnknownHostException ex)
                 {
@@ -87,11 +93,13 @@ public final class DistanceVectorCalculator
                 }
             }
             counter++;
-            boolean sameOrDifferent = currentMatrix.equals(lastMatrix);
-            String ans = sameOrDifferent ? "Same" : "Updated";
+
+            //Check for difference in DV matrix after this round. (same -> converged/done) (updated -> not done, keep going)
+            boolean same = currentMatrix.equals(lastMatrix);
+            String ans = same ? "Same" : "Updated";
             System.out.println("Updated from last DV matrix or the same? " + ans);
 
-            if(sameOrDifferent)
+            if(same)
             {
                 updated = false;
                 printDV(currentMatrix);
@@ -101,6 +109,7 @@ public final class DistanceVectorCalculator
         } while(updated);
     }
 
+    //Helper method to print out a matrix in a human readable format.
     public static void printDV(Matrix m)
     {
         for(int i = 0; i < m.getRowSize(); i++)
@@ -109,6 +118,7 @@ public final class DistanceVectorCalculator
         }
     }
 
+    //Reads in the network adjacency matrix and generates the node threads
     public static Triple network_init()
     {
         ArrayList<ArrayList<Integer>> matrix = readAdjacencyMatrix();
@@ -121,7 +131,7 @@ public final class DistanceVectorCalculator
 
         ExecutorService exec = Executors.newCachedThreadPool();
 
-        for(int i = 0; i < matrix.size(); i++)
+        for(int i = 0; i < matrix.size(); i++) // create all the node runnables and keep track of the socket -> node mappings
         {
             ArrayList<Integer> row = matrix.get(i);
             ArrayList<Integer> neighbors = new ArrayList<>();
@@ -142,7 +152,7 @@ public final class DistanceVectorCalculator
             nodes.add(temp);
         }
 
-        for(NodeRunnable n : nodes) //Distribute the node to port mapping to each of the nodes.
+        for(NodeRunnable n : nodes) //Distribute the node to port mapping to each of the nodes and spin up each node thread.
         {
             n.setNetwork(network);
             exec.submit(n);
@@ -173,6 +183,7 @@ public final class DistanceVectorCalculator
         return serverSockets;
     }
 
+    //Helper method. Reads in the adjacency matrix and returns it in the form of a ArrayList<ArrayList<Integer>>
     public static ArrayList<ArrayList<Integer>> readAdjacencyMatrix()
     {
         ArrayList<ArrayList<Integer>> matrix = new ArrayList<>();
@@ -205,6 +216,7 @@ public final class DistanceVectorCalculator
         return matrix;
     }
 
+    //Signal all nodes to shutdown and close their sockets. Shutdown the ExecutorService object.
     public static void shutdown(ArrayList<ServerSocket> sockets, ExecutorService exec)
     {
         for(ServerSocket sock: sockets)
