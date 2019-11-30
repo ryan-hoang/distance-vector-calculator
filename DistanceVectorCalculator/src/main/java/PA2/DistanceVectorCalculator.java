@@ -230,5 +230,3 @@ public final class DistanceVectorCalculator
         exec.shutdown();
     }
 }
-
-

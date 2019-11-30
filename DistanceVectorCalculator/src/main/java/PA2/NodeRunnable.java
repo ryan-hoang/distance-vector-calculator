@@ -20,7 +20,9 @@ public final class NodeRunnable implements Runnable {
     @Override
     public void run()
     {
-        //System.out.println(Thread.currentThread().getName() + "is online. | " + "node: " + id + " | " + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: " + myServerSocket.getLocalPort() + " | " + network.toString());
+        System.out.println(Thread.currentThread().getName() + " is online. | " + "node: " + id + " | "
+                + weightVector.toString() + " | neighbors:" + neighbors + " | listening on port: "
+                + myServerSocket.getLocalPort() + " | " + network.toString());
 
         while(true)
         {
