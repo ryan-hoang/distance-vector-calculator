@@ -38,6 +38,12 @@ public final class NodeRunnable implements Runnable {
                 @SuppressWarnings("unchecked")
                 Packet received = (Packet) input.readObject();
 
+                if(received.flagControlPacket() && received.flagShutdown() && received.senderID() == -1) // shutdown time
+                {
+                    client.close();
+                    cleanup();
+                    return;
+                }
 
                 if(received.flagControlPacket() && received.flagActivate() && received.senderID() == -1) // received signal from the main thread to start sending info to neighbors. id -1 means its from the main thread.
                 {
@@ -64,13 +70,6 @@ public final class NodeRunnable implements Runnable {
                     }
                     client.close();
                 }
-                else if(received.flagControlPacket() && received.flagShutdown() && received.senderID() == -1) // shutdown time
-                {
-                    output.writeObject(new Packet(weightVector, false, false, false, false, id)); //send back my weight vector and shutdown
-                    client.close();
-                    cleanup();
-                    return;
-                }
                 else
                 {
                     System.out.println("Node " + this.id + " received DV from node " + received.senderID());
@@ -88,15 +87,17 @@ public final class NodeRunnable implements Runnable {
                     client.close();
                 }
 
-
+                client.close();
             }
             catch(IOException e)
             {
                 System.err.println(Thread.currentThread().getName() + " Failed to accept incoming TCP client connection.");
+                break;
             }
             catch(ClassNotFoundException e)
             {
                 System.err.println(Thread.currentThread().getName() + "Failed to deserialize data.");
+                break;
             }
         }
 
@@ -167,7 +168,7 @@ public final class NodeRunnable implements Runnable {
             output.writeObject(payload);
 
             response = (Packet) input.readObject();
-
+            socket.close();
         }
         catch (UnknownHostException ex)
         {

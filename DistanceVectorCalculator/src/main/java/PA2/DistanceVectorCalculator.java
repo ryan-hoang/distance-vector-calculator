@@ -22,6 +22,7 @@ public final class DistanceVectorCalculator
         @SuppressWarnings("unchecked")
         ArrayList<ArrayList<Integer>> matrix = (ArrayList<ArrayList<Integer>>) t.third;
         startDV(sockets, matrix);
+        shutdown(sockets, exec);
     }
 
     public static void startDV(ArrayList<ServerSocket> nodes, ArrayList<ArrayList<Integer>> mat)
@@ -98,8 +99,6 @@ public final class DistanceVectorCalculator
                 break;
             }
         } while(updated);
-
-
     }
 
     public static void printDV(Matrix m)
@@ -205,4 +204,31 @@ public final class DistanceVectorCalculator
 
         return matrix;
     }
+
+    public static void shutdown(ArrayList<ServerSocket> sockets, ExecutorService exec)
+    {
+        for(ServerSocket sock: sockets)
+        {
+            try (Socket socket = new Socket(InetAddress.getLocalHost(), sock.getLocalPort()))
+            {
+                ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+                ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+
+                Packet payload = new Packet(new ArrayList<Integer>(), true, false, true, false, -1);
+                output.writeObject(payload);
+            }
+            catch (UnknownHostException ex)
+            {
+                System.err.println(Thread.currentThread().getName() + ": UnknownHostException, failed to connect to host.");
+            }
+            catch (IOException ex)
+            {
+                System.err.println(Thread.currentThread().getName() + ": IOException.");
+            }
+        }
+        exec.shutdown();
+    }
 }
+
+
