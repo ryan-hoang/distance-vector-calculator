@@ -2,6 +2,8 @@ My program can be run with the following on the command line:
 
 java -jar DistanceVectorCalculator-1.0.jar
 
+It will output the shortest path matrix for the specified network graph, specifically it will determine the shortest distance between any two nodes in the network and represent this information in the form of an adjacency matrix.
+
 To specify a network graph for the program, please use an adjacency matrix, like so:
 
 	0	2	0	0	1
