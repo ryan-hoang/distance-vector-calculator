@@ -16,7 +16,7 @@ The above matrix represents this graph: https://gyazo.com/c087dd9514382b70f0fd8c
 
 Ensure the network.txt file is in the same directory as the jar file before running.
 
-To build my program, you must use Apache Maven
+To build my program, you must use Apache Maven.
 To do so ensure you are inside the DistanceVectorCalculator directory and run "mvn clean install".
 The compiled .jar file will be output in the target directory.
 
