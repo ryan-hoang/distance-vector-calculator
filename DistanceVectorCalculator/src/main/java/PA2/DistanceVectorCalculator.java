@@ -102,19 +102,32 @@ public final class DistanceVectorCalculator
             if(same)
             {
                 updated = false;
-                printDV(currentMatrix);
+                printDV(currentMatrix, true);
                 System.out.println("Number of rounds till convergence = " + (counter-1));
                 break;
             }
         } while(updated);
+
+        System.out.println("================================================================================");
+        System.out.println("Shortest distance matrix:");
+        printDV(currentMatrix,false);
     }
 
     //Helper method to print out a matrix in a human readable format.
-    public static void printDV(Matrix m)
+    public static void printDV(Matrix m, boolean showNames)
     {
-        for(int i = 0; i < m.getRowSize(); i++)
+        if(showNames)
         {
-            System.out.println("Node " + i + " DV = " + m.getRow(i));
+            for (int i = 0; i < m.getRowSize(); i++) {
+                System.out.println("Node " + i + " DV = " + m.getRow(i));
+            }
+        }
+        else
+        {
+            for(int i = 0; i < m.getRowSize(); i++)
+            {
+                System.out.println(m.getRow(i));
+            }
         }
     }
 
