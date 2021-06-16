@@ -4,6 +4,8 @@ java -jar DistanceVectorCalculator-1.0.jar
 
 It will output the shortest path matrix for the specified network graph, specifically it will determine the shortest distance between any two nodes in the network and represent this information in the form of an adjacency matrix.
 
+Each node has its own thread and all nodes communicate/propagate updates using the Java Socket API.
+
 To specify a network graph for the program, please use an adjacency matrix, like so:
 
 	0	2	0	0	1
